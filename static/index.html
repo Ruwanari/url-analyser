@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>HTML Forms</h2>
+{{if .Success}}
+<h1>Thanks for your message!</h1>
+{{else}}
+<form method="post">
+    <label for="url">Url:</label><br>
+    <input type="text" id="url" name="url" value=""><br>
+    <input type="submit" value="Submit">
+</form>
+{{end}}
+</body>
+</html>
