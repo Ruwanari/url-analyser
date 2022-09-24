@@ -1,17 +1,27 @@
 package usecases
 
 import (
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
 	"strings"
-	"web-page-analyser/response_schemas"
+	"web-page-analyser/entities/response_schemas"
 )
 
+/*AnalyseUrlUsecase scrapes the HTML content of the web page using Goquery and returns
+following information.
+- Title of the web page
+- HTML version of the web page
+- Headings present on the web page and their respective counts
+- External link count on the web page
+- Internal link count on the web page
+- Inaccessible link count on the web page
+- If the web page contains a login or not
+*/
 func AnalyseUrlUsecase(url string) (response response_schemas.AnalyseUrlResponse, err error) {
 	headingSlice := []string{"h1", "h2", "h3", "h4", "h5", "h6"}
-
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("failed to make a request to url" + err.Error())
@@ -19,58 +29,14 @@ func AnalyseUrlUsecase(url string) (response response_schemas.AnalyseUrlResponse
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		log.Printf("failed to fetch data: %d %s", resp.StatusCode, resp.Status)
-		return
+		return response, errors.New("error response when contacting url")
 	}
-	response.Protocol = resp.Request.Proto
+	//html version
+	response.Version = resp.Request.Proto
 
-	hasInAccessibleLink := false
-
-	data := `
-	<html lang="en">
-	<body>
-	<p>List of words</p>
-	<h1>dark</h1>
-	<h2>smart</h2>
-	<h3>war</h3>
-		<h3>war</h3>
-		<h1>dark</h1>
-	<h2>smart</h2>
-	<h3>war</h3>
-		<h3>war</h3>
-		<h1>dark</h1>
-	<h2>smart</h2>
-	<h3>war</h3>
-		<h3>war</h3>
-	<a href="#lession1">Lession.1</a><br />
-	<a href="#lession2">Lession.2</a><br />
-	<a href="#lession3">Lession.3</a><br />
-	<a href="#lession4">Lession.4</a><br />
-	<form id="login" method="get" action="login.php">
-	   <label><b>User Name
-	   </b>
-	   </label>
-	   <input type="text" name="Uname" id="Uname" placeholder="Username">
-	   <br><br>
-	   <label><b>Password
-	   </b>
-	   </label>
-	   <input type="Password" name="Pass" id="Pass" placeholder="Password">
-	   <br><br>
-	   <input type="button" name="log" id="log" value="Log In Here">
-	   <br><br>
-	   <input type="checkbox" id="check">
-	   <span>Remember me</span>
-	   <br><br>
-	   Forgot <a href="#">Password</a>
-	</form>
-	<footer>footer for words</footer>
-	</body>
-	</html>
-	`
-	//strings.NewReader(data)
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(data))
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Printf("response cannot be parsed as html, err: %v", err)
 		return
@@ -79,176 +45,94 @@ func AnalyseUrlUsecase(url string) (response response_schemas.AnalyseUrlResponse
 	title := doc.Find("title").Text()
 	response.Title = title
 
+	response.Version = doc.Find("!DOCTYPE html").Text()
+
 	for _, val := range headingSlice {
-		switch val {
-		case "h1":
-			response.Headers.H1 = findMultipleElementCount(doc, val)
-
-		case "h2":
-			response.Headers.H2 = findMultipleElementCount(doc, val)
-
-		case "h3":
-			response.Headers.H3 = findMultipleElementCount(doc, val)
-
-		case "h4":
-			response.Headers.H4 = findMultipleElementCount(doc, val)
-
-		case "h5":
-			response.Headers.H5 = findMultipleElementCount(doc, val)
-
-		case "h6":
-			response.Headers.H6 = findMultipleElementCount(doc, val)
+		heading := response_schemas.Header{
+			HeadingType: val,
+			Count:       findMultipleElementCount(doc, val),
 		}
+		response.Headers = append(response.Headers, heading)
 
 	}
 
-	//doc.Find("h1").Each(func(i int, s *goquery.Selection) {
-	//	// For each item found, get the name.
-	//	if i == 0 {
-	//		response.Headers.H1 = 1
-	//	} else {
-	//		response.Headers.H1 = response.Headers.H1 + 1
-	//	}
-	//
-	//})
-	//
-	//doc.Find("h2").Each(func(i int, s *goquery.Selection) {
-	//	// For each item found, get the name.
-	//	if i == 0 {
-	//		response.Headers.H2 = 1
-	//	} else {
-	//		response.Headers.H2 = response.Headers.H2 + 1
-	//	}
-	//
-	//})
-	//
-	//doc.Find("h3").Each(func(i int, s *goquery.Selection) {
-	//	// For each item found, get the name.
-	//	if i == 0 {
-	//		response.Headers.H3 = 1
-	//	} else {
-	//		response.Headers.H3 = response.Headers.H3 + 1
-	//	}
-	//
-	//})
-	//
-	//doc.Find("h4").Each(func(i int, s *goquery.Selection) {
-	//	if i == 0 {
-	//		response.Headers.H4 = 1
-	//	} else {
-	//		response.Headers.H4 = response.Headers.H4 + 1
-	//	}
-	//
-	//})
-	//
-	//doc.Find("h5").Each(func(i int, s *goquery.Selection) {
-	//	if i == 0 {
-	//		response.Headers.H5 = response.Headers.H5 + i + 1
-	//	} else {
-	//		response.Headers.H5 = response.Headers.H5 + i
-	//	}
-	//
-	//})
-	//
-	//doc.Find("h6").Each(func(i int, s *goquery.Selection) {
-	//	if i == 0 {
-	//		response.Headers.H6 = 1
-	//	} else {
-	//		response.Headers.H6 = response.Headers.H6 + 1
-	//	}
-	//
-	//})
-
-	f := func(i int, s *goquery.Selection) bool {
-
-		link, _ := s.Attr("href")
-		return strings.HasPrefix(link, "https")
+	inaccessibleLinkCountHttps, externalLinkCountHttps := 0, 0
+	inaccessibleLinkCountHttps, externalLinkCountHttps, err = findLinkInfo(doc, "https:")
+	if err != nil {
+		log.Printf("Could not retrieve external link information")
+		return
 	}
 
-	doc.Find("body a").FilterFunction(f).Each(func(i int, tag *goquery.Selection) {
-
-		link, _ := tag.Attr("href")
-		linkText := tag.Text()
-		fmt.Printf("%s %s\n", linkText, link)
-
-		resp2, err := http.Get(link)
-		if err != nil {
-			hasInAccessibleLink = true
-			log.Printf(err.Error())
-			return
-		}
-
-		defer resp2.Body.Close()
-
-		if resp2.StatusCode != 200 {
-			hasInAccessibleLink = true
-			log.Printf("failed to fetch data: %d %s", resp2.StatusCode, resp2.Status)
-			return
-		}
-		if i == 0 {
-			response.ExternalLinks = 1
-		} else {
-			response.ExternalLinks = response.ExternalLinks + 1
-		}
-	})
-
-	f = func(i int, s *goquery.Selection) bool {
-
-		link, _ := s.Attr("href")
-		return strings.HasPrefix(link, "#")
+	inaccessibleLinkCountHttp, externalLinkCountHttp := 0, 0
+	inaccessibleLinkCountHttp, externalLinkCountHttp, err = findLinkInfo(doc, "http:")
+	if err != nil {
+		log.Printf("Could not retrieve external link information")
+		return
 	}
 
-	doc.Find("body a").FilterFunction(f).Each(func(i int, tag *goquery.Selection) {
+	inaccessibleLinkCountInternal := 0
+	inaccessibleLinkCountInternal, response.InternalLinks, err = findLinkInfo(doc, "#")
+	if err != nil {
+		log.Printf("Could not retrieve internal link information")
+		return
+	}
 
-		link, _ := tag.Attr("href")
-		linkText := tag.Text()
-		fmt.Printf("%s %s\n", linkText, link)
+	response.InaccessibleLinkCount = inaccessibleLinkCountHttps + inaccessibleLinkCountHttp +
+		inaccessibleLinkCountInternal
+	response.ExternalLinks = externalLinkCountHttps + externalLinkCountHttp
 
-		if i == 0 {
-			response.InternalLinks = 1
-		} else {
-			response.InternalLinks = response.InternalLinks + 1
-		}
-		resp3, err := http.Get(url + "/" + link)
-		if err != nil {
-			hasInAccessibleLink = true
-			log.Printf(err.Error())
-			return
-		}
-
-		defer resp3.Body.Close()
-
-		if resp3.StatusCode != 200 {
-			hasInAccessibleLink = true
-			log.Printf("failed to fetch data: %d %s", resp3.StatusCode, resp3.Status)
-			return
-		}
-	})
-
-	doc.Find("div input[type=password]").Each(func(i int, s *goquery.Selection) {
+	doc.Find("body input[type=password]").Each(func(i int, s *goquery.Selection) {
 		response.LoginFormPresent = true
-
 	})
-
-	inp := doc.Find("input")
-	v := inp.AttrOr("type", "")
-	if v != "" {
-		response.LoginFormPresent = true
-	}
-
-	response.InaccessibleLinks = hasInAccessibleLink
+	log.Printf("Success response received %#v", response)
 
 	return
 }
 
 func findMultipleElementCount(doc *goquery.Document, selector string) (count int) {
 	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
-		if i == 0 {
-			count = 1
-		} else {
-			count = count + 1
-		}
+		count++
 
 	})
 	return count
+}
+
+func findLinkInfo(doc *goquery.Document, prefix ...string) (inaccessibleLinkCount int, count int, err error) {
+
+	count = 0
+	inaccessibleLinkCount = 0
+	for _, value := range prefix {
+		filterFunc := func(i int, s *goquery.Selection) bool {
+
+			link, ok := s.Attr("href")
+			if !ok {
+				log.Printf("Could not scrape href attribute")
+				return false
+			}
+			return strings.HasPrefix(link, value)
+		}
+
+		doc.Find("body a").FilterFunction(filterFunc).Each(func(i int, tag *goquery.Selection) {
+			count++
+			link, _ := tag.Attr("href")
+			linkText := tag.Text()
+			fmt.Printf("%s %s\n", linkText, link)
+
+			resp, err := http.Get(link)
+			if err != nil {
+				inaccessibleLinkCount++
+				log.Printf("Cannot access link %v, error %v", link, err.Error())
+				return
+			}
+
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				inaccessibleLinkCount++
+				log.Printf("failed to fetch data: %d %s", resp.StatusCode, resp.Status)
+				return
+			}
+		})
+	}
+	return inaccessibleLinkCount, count, err
 }

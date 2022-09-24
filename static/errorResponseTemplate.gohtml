@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<style>
+        body
+        {
+                margin:auto;
+                display: block;
+                width:100%;
+                padding:10px;
+                background-color:#ebebeb;
+                font-size:14px;
+                font-family:Verdana;
+        }
+</style>
+<body>
+{{ range .Errors}}
+        <p>Error Code: {{.Code}}</p>
+        <p>Error Message: {{.Message}}</p>
+{{end}}
+
+</body>
+</html>

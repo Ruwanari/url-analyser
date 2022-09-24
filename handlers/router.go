@@ -4,10 +4,14 @@ import (
 	httpTransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"net/http"
-	"web-page-analyser/decoders"
-	"web-page-analyser/encoders"
-	"web-page-analyser/endpoints"
+	"web-page-analyser/handlers/decoders"
+	encoders2 "web-page-analyser/handlers/encoders"
+	"web-page-analyser/handlers/endpoints"
 )
+
+var serverOptions = []httpTransport.ServerOption{
+	httpTransport.ServerErrorEncoder(encoders2.CustomErrorEncoder),
+}
 
 func GetRoutes() *mux.Router {
 
@@ -17,7 +21,8 @@ func GetRoutes() *mux.Router {
 		NewServer(
 			endpoints.AnalyseUrl(),
 			decoders.AnalyseUrlDecoder(),
-			encoders.EncodeSuccessPayloadResponse,
+			encoders2.EncodeSuccessPayloadResponse,
+			serverOptions...,
 		)).Methods(http.MethodPost)
 
 	return r

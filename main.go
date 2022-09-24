@@ -1,20 +1,31 @@
 package main
 
 import (
-	"fmt"
+	"embed"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"web-page-analyser/config"
 	"web-page-analyser/handlers/servers"
 )
 
+var (
+	//go:embed static
+	res   embed.FS
+	pages = map[string]string{
+		"/": "static/index.gohtml",
+	}
+)
+
 func main() {
+
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	servers.Init()
+	config.ParseEnvConfig()
+	servers.Init(res, pages)
 
 	message := <-signals
-	log.Printf(fmt.Sprintf("Microservice stopped successfully due to signal '%v'", message.String()))
+	log.Printf("Microservice stopped successfully due to signal '%v'", message.String())
 
 }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<style>
+    body {
+        margin: auto;
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #ebebeb;
+        font-size: 14px;
+        font-family: Verdana;
+    }
+</style>
+<body>
+<p>Title : {{ .Title}}</p>
+<p>HTML Version: {{ .Version}}</p>
+{{ range .Headers}}
+    {{if gt .Count 0}}
+        <p>Number of {{.HeadingType}} headings: {{ .Count}}</p>
+    {{end}}
+{{end}}
+{{if gt .InternalLinks 0 }}
+    <p> Number of internal links: {{ .InternalLinks }} </p>
+{{end}}
+{{if gt .ExternalLinks 0 }}
+    <p> Number of external links: {{ .ExternalLinks}}  </p>
+{{end}}
+{{if gt .InaccessibleLinkCount 0 }}
+    <p>Number of inaccessible Links: {{.InaccessibleLinkCount}}</p>
+{{end}}
+{{if .LoginFormPresent }}
+    <p>Login Form - Present</p>
+{{end}}
+
+</body>
+</html>

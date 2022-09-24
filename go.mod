@@ -6,9 +6,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/go-kit/kit v0.12.0
 	github.com/gorilla/mux v1.8.0
-)
-
-require (
+	gopkg.in/yaml.v2 v2.2.8
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/go-kit/log v0.2.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
