@@ -33,8 +33,6 @@ func AnalyseUrlUsecase(url string) (response response_schemas.AnalyseUrlResponse
 		log.Printf("failed to fetch data: %d %s", resp.StatusCode, resp.Status)
 		return response, errors.New("error response when contacting url")
 	}
-	//html version
-	response.Version = resp.Request.Proto
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
@@ -42,10 +40,15 @@ func AnalyseUrlUsecase(url string) (response response_schemas.AnalyseUrlResponse
 		return
 	}
 
+	htmlString, err := doc.Html()
+	if err != nil {
+		log.Printf("couldnt extract HTML from document +%v", err.Error())
+		return response_schemas.AnalyseUrlResponse{}, err
+	}
+	response.Version = checkDoctype(htmlString)
+
 	title := doc.Find("title").Text()
 	response.Title = title
-
-	response.Version = doc.Find("!DOCTYPE html").Text()
 
 	for _, val := range headingSlice {
 		heading := response_schemas.Header{
@@ -135,4 +138,26 @@ func findLinkInfo(doc *goquery.Document, prefix ...string) (inaccessibleLinkCoun
 		})
 	}
 	return inaccessibleLinkCount, count, err
+}
+
+func checkDoctype(html string) string {
+
+	var doctypes = make(map[string]string)
+
+	doctypes["HTML 4.01"] = `"-//W3C//DTD HTML 4.01//EN"`
+	doctypes["XHTML 1.0"] = `"-//W3C//DTD XHTML 1.0 Strict//EN"`
+	doctypes["XHTML 1.1"] = `"-//W3C//DTD XHTML 1.1//EN"`
+	doctypes["HTML 5"] = `<!DOCTYPE html>`
+
+	var version = "UNKNOWN"
+
+	for doctype, matcher := range doctypes {
+		match := strings.Contains(html, matcher)
+
+		if match == true {
+			version = doctype
+		}
+	}
+
+	return version
 }
