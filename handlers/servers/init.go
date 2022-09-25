@@ -5,15 +5,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"web-page-analyser/config"
+	"web-page-analyser/config-reader"
 	"web-page-analyser/handlers"
 )
 
 func Init(res embed.FS, pages map[string]string) {
 
 	go func() {
-		log.Print("HTTP server starting on ", config.EnvConf.BackendPort)
-		err := http.ListenAndServe(":"+config.EnvConf.BackendPort, handlers.GetRoutes())
+		log.Print("HTTP server starting on ", config_reader.EnvConf.BackendPort)
+		err := http.ListenAndServe(":"+config_reader.EnvConf.BackendPort, handlers.GetRoutes())
 		if err != nil {
 			log.Fatal("HTTP server running failed.", err)
 		}
@@ -44,8 +44,8 @@ func Init(res embed.FS, pages map[string]string) {
 			}
 		})
 		http.FileServer(http.FS(res))
-		log.Println("server started on port " + config.EnvConf.FrontendPort)
-		err := http.ListenAndServe(":"+config.EnvConf.FrontendPort, nil)
+		log.Println("server started on port " + config_reader.EnvConf.FrontendPort)
+		err := http.ListenAndServe(":"+config_reader.EnvConf.FrontendPort, nil)
 		if err != nil {
 			log.Fatal("HTTP server running failed.", err)
 		}

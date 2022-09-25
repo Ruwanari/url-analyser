@@ -1,4 +1,4 @@
-package config
+package config_reader
 
 import (
 	"gopkg.in/yaml.v2"

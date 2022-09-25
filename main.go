@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"web-page-analyser/config"
+	"web-page-analyser/config-reader"
 	"web-page-analyser/handlers/servers"
 )
 
@@ -22,7 +22,7 @@ func main() {
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	config.ParseEnvConfig()
+	config_reader.ParseEnvConfig()
 	servers.Init(res, pages)
 
 	message := <-signals
