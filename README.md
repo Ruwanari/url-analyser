@@ -11,6 +11,7 @@ This service scrapes the HTML content of a web page using Goquery and returns fo
 
 # To run the service
 - Navigate to project root
+- go test -v ./...
 - go run main.go
 
 # Pre-requisites
