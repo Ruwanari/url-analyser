@@ -2,16 +2,18 @@
 <html>
 <style>
     body {
-        margin: auto;
-        display: block;
         width: 100%;
-        padding: 10px;
-        background-color: #ebebeb;
-        font-size: 14px;
-        font-family: Verdana;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border-radius: 4px;
+        box-sizing: border-box;
+        background-color:#ebebeb;
+        font-size:14px;
     }
 </style>
 <body>
+<h1 style="text-align: center; color: darkgreen">Url Analyser</h1>
 <p>Title : {{ .Title}}</p>
 <p>HTML Version: {{ .Version}}</p>
 {{ range .Headers}}

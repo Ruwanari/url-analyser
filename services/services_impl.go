@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 /*FindLinkInfo finds the links available in HTML page and returns inaccessible link count, external/internal link count.
@@ -14,6 +15,7 @@ Prefix (https/http/#) should be sent as a parameter.*/
 func (d Document) FindLinkInfo(ctx context.Context, prefix ...string) (inaccessibleLinkCount int, count int, err error) {
 	count = 0
 	inaccessibleLinkCount = 0
+	var links []string
 	for _, value := range prefix {
 		filterFunc := func(i int, s *goquery.Selection) bool {
 
@@ -29,26 +31,20 @@ func (d Document) FindLinkInfo(ctx context.Context, prefix ...string) (inaccessi
 			count++
 			link, ok := tag.Attr("href")
 			if !ok {
-				log.Printf("Cannot access tag %v, error %v ctx : %v", link, ctx)
+				log.Printf("Cannot access tag %v, error %v ctx : %v", link, err, ctx)
 				return
 			}
 			linkText := tag.Text()
 			fmt.Printf("%s %s\n", linkText, link)
 
-			resp, err := http.Get(link)
+			links = append(links, link)
+			accessibility, err := d.CheckAccessibility(ctx, links)
 			if err != nil {
-				inaccessibleLinkCount++
-				log.Printf("Cannot access link %v, error %v ctx : %v", link, err.Error(), ctx)
+				log.Printf("Cannot check accessibility %v, error %v ctx : %v", links, err, ctx)
 				return
 			}
 
-			defer resp.Body.Close()
-
-			if (resp.StatusCode < http.StatusOK) || (resp.StatusCode >= http.StatusMultipleChoices) {
-				inaccessibleLinkCount++
-				log.Printf("failed to fetch data %d %s ctx : %v", resp.StatusCode, resp.Status, ctx)
-				return
-			}
+			inaccessibleLinkCount = accessibility
 		})
 	}
 	return inaccessibleLinkCount, count, err
@@ -85,4 +81,34 @@ func (d Document) FindMultipleElementCount(ctx context.Context, selector string)
 
 	})
 	return count
+}
+
+func (d Document) CheckAccessibility(ctx context.Context, links []string) (inaccessibleLinkCount int, err error) {
+	inaccessibleLinkCount = 0
+	var wg sync.WaitGroup
+	wg.Add(len(links))
+
+	for i := 0; i < len(links); i++ {
+		go func(i int) {
+			defer wg.Done()
+			resp, err := http.Get(links[i])
+			if err != nil {
+				inaccessibleLinkCount++
+				log.Printf("Cannot access link %v, error %v ctx : %v", links[i], err.Error(), ctx)
+				return
+			}
+
+			defer resp.Body.Close()
+
+			if (resp.StatusCode < http.StatusOK) || (resp.StatusCode >= http.StatusMultipleChoices) {
+				inaccessibleLinkCount++
+				log.Printf("failed to fetch data %d %s ctx : %v", resp.StatusCode, resp.Status, ctx)
+				return
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	return
 }
