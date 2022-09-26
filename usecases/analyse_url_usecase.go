@@ -10,6 +10,10 @@ import (
 	"web-page-analyser/services"
 )
 
+const prefixInternal = "#"
+const prefixHttps = "https:"
+const prefixHttp = "http:"
+
 /*AnalyseUrlUsecase scrapes the HTML content of the web page using Goquery and returns
 following information.
 - Title of the web page
@@ -61,21 +65,21 @@ func AnalyseUrlUsecase(ctx context.Context, url string) (response response_schem
 	}
 
 	inaccessibleLinkCountHttps, externalLinkCountHttps := 0, 0
-	inaccessibleLinkCountHttps, externalLinkCountHttps, err = document.FindLinkInfo(ctx, "https:")
+	inaccessibleLinkCountHttps, externalLinkCountHttps, err = document.FindLinkInfo(ctx, prefixHttps)
 	if err != nil {
 		log.Printf("Could not retrieve external link information ctx : %v, error : %v", ctx, err.Error())
 		return
 	}
 
 	inaccessibleLinkCountHttp, externalLinkCountHttp := 0, 0
-	inaccessibleLinkCountHttp, externalLinkCountHttp, err = document.FindLinkInfo(ctx, "http:")
+	inaccessibleLinkCountHttp, externalLinkCountHttp, err = document.FindLinkInfo(ctx, prefixHttp)
 	if err != nil {
 		log.Printf("Could not retrieve external link information ctx : %v, error : %v", ctx, err.Error())
 		return
 	}
 
 	inaccessibleLinkCountInternal := 0
-	inaccessibleLinkCountInternal, response.InternalLinks, err = document.FindLinkInfo(ctx, "#")
+	inaccessibleLinkCountInternal, response.InternalLinks, err = document.FindLinkInfo(ctx, prefixInternal)
 	if err != nil {
 		log.Printf("Could not retrieve internal link information ctx : %v, error : %v", ctx, err.Error())
 		return
