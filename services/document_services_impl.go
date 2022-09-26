@@ -12,42 +12,38 @@ import (
 
 /*FindLinkInfo finds the links available in HTML page and returns inaccessible link count, external/internal link count.
 Prefix (https/http/#) should be sent as a parameter.*/
-func (d Document) FindLinkInfo(ctx context.Context, prefix ...string) (inaccessibleLinkCount int, count int, err error) {
+func (d Document) FindLinkInfo(ctx context.Context, prefix string) (inaccessibleLinkCount int, count int, err error) {
 	count = 0
 	inaccessibleLinkCount = 0
 	var links []string
-	for _, value := range prefix {
-		filterFunc := func(i int, s *goquery.Selection) bool {
+	filterFunc := func(i int, s *goquery.Selection) bool {
 
-			link, ok := s.Attr("href")
-			if !ok {
-				log.Printf("Could not scrape href attribute ctx: %v", ctx)
-				return false
-			}
-			return strings.HasPrefix(link, value)
+		link, ok := s.Attr("href")
+		if !ok {
+			log.Printf("Could not scrape href attribute ctx: %v", ctx)
+			return false
 		}
-
-		d.Doc.Find("body a").FilterFunction(filterFunc).Each(func(i int, tag *goquery.Selection) {
-			count++
-			link, ok := tag.Attr("href")
-			if !ok {
-				log.Printf("Cannot access tag %v, error %v ctx : %v", link, err, ctx)
-				return
-			}
-			linkText := tag.Text()
-			fmt.Printf("%s %s\n", linkText, link)
-
-			links = append(links, link)
-			accessibility, err := d.CheckAccessibility(ctx, links)
-			if err != nil {
-				log.Printf("Cannot check accessibility %v, error %v ctx : %v", links, err, ctx)
-				return
-			}
-
-			inaccessibleLinkCount = accessibility
-		})
+		return strings.HasPrefix(link, prefix)
 	}
-	return inaccessibleLinkCount, count, err
+
+	d.Doc.Find("body a").FilterFunction(filterFunc).Each(func(i int, tag *goquery.Selection) {
+		count++
+		link, ok := tag.Attr("href")
+		if !ok {
+			log.Printf("Cannot access tag %v, error %v ctx : %v", link, err, ctx)
+			return
+		}
+		linkText := tag.Text()
+		fmt.Printf("%s %s\n", linkText, link)
+
+		links = append(links, link)
+	})
+	accessibility, err := d.CheckAccessibility(ctx, links)
+	if err != nil {
+		log.Printf("Cannot check accessibility %v, error %v ctx : %v", links, err, ctx)
+		return
+	}
+	return accessibility, count, err
 }
 
 //CheckDoctype returns the HTML version of a web page
