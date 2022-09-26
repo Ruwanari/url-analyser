@@ -10,21 +10,21 @@ import (
 )
 
 //EncodeSuccessPayloadResponse encodes and renders success responses to success html template.
-func EncodeSuccessPayloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func EncodeSuccessPayloadResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	analyseUrlResponse := response.(response_schemas.AnalyseUrlResponse)
 
-	fp := path.Join("static", "responseTemplate.gohtml")
+	fp := path.Join("static", "success_response_template.gohtml")
 	tmpl, err := template.ParseFiles(fp)
 	if err != nil {
 		if err != nil {
-			log.Printf("Error parsing template " + err.Error())
+			log.Printf("Error parsing template ctx: %v, err: %v", ctx, err.Error())
 			return err
 		}
 	}
 
 	err = tmpl.Execute(w, analyseUrlResponse)
 	if err != nil {
-		log.Printf("Error executing template " + err.Error())
+		log.Printf("Error executing template ctx: %v, err: %v ", ctx, err.Error())
 		return err
 	}
 	return err

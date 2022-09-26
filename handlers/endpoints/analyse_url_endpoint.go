@@ -14,15 +14,14 @@ by the url.*/
 func AnalyseUrl() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		analyseUrlRequest, ok := request.(request_schemas.AnalyseUrlRequest)
-		//add ctx
 		if !ok {
-			log.Printf("Error in Request")
+			log.Printf("Error in Request ctx : %v, err : %v ", ctx, app_errors.BadRequestError)
 			return nil, app_errors.BadRequestError
 		}
 
-		response, err = usecases.AnalyseUrlUsecase(analyseUrlRequest.Url)
+		response, err = usecases.AnalyseUrlUsecase(ctx, analyseUrlRequest.Url)
 		if err != nil {
-			log.Printf("Could not analyse url : %v , error : %v", analyseUrlRequest.Url, err)
+			log.Printf("Could not analyse url : %v, ctx : %v, error : %v", analyseUrlRequest.Url, ctx, err)
 			return nil, app_errors.InternalServerError
 		}
 		return

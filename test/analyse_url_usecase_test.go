@@ -1,10 +1,11 @@
 package test
 
 import (
+	"context"
 	"github.com/PuerkitoBio/goquery"
 	"strings"
 	"testing"
-	"web-page-analyser/interfaces"
+	"web-page-analyser/services"
 )
 
 var data = `
@@ -45,16 +46,16 @@ var data = `
 	</html>
 	`
 var d *goquery.Document
+var ctx = context.Background()
 
 func Test_findMultipleElementCount(t *testing.T) {
 	tag := "h1"
-	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	d, _ = goquery.NewDocumentFromReader(strings.NewReader(data))
+	var doc = services.Document{
 		Doc: d,
 	}
-	//doc, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
 	expected := 2
-	result := doc.FindMultipleElementCount(tag)
+	result := doc.FindMultipleElementCount(ctx, tag)
 
 	if result != expected {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", result, expected, result)
@@ -65,12 +66,12 @@ func Test_findMultipleElementCount(t *testing.T) {
 
 func Test_findMultipleElementCountH2(t *testing.T) {
 	tag := "h2"
-	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	d, _ = goquery.NewDocumentFromReader(strings.NewReader(data))
+	var doc = services.Document{
 		Doc: d,
 	}
 	expected := 2
-	result := doc.FindMultipleElementCount(tag)
+	result := doc.FindMultipleElementCount(ctx, tag)
 
 	if result != expected {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", result, expected, result)
@@ -82,11 +83,11 @@ func Test_findMultipleElementCountH2(t *testing.T) {
 func Test_FindLinkInfo(t *testing.T) {
 	tag := "https:"
 	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	var doc = services.Document{
 		Doc: d,
 	}
 	expectedInaccessibleLinkCount := 0
-	inaccessibleLinkCount, _, _ := doc.FindLinkInfo(tag)
+	inaccessibleLinkCount, _, _ := doc.FindLinkInfo(ctx, tag)
 
 	if expectedInaccessibleLinkCount != inaccessibleLinkCount {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", inaccessibleLinkCount, expectedInaccessibleLinkCount, inaccessibleLinkCount)
@@ -98,11 +99,11 @@ func Test_FindLinkInfo(t *testing.T) {
 func Test_FindLinkInfoLinkCount(t *testing.T) {
 	tag := "https:"
 	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	var doc = services.Document{
 		Doc: d,
 	}
 	expectedLinkCount := 1
-	_, linkCount, _ := doc.FindLinkInfo(tag)
+	_, linkCount, _ := doc.FindLinkInfo(ctx, tag)
 
 	if expectedLinkCount != linkCount {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", linkCount,
@@ -116,11 +117,11 @@ func Test_FindLinkInfoLinkCount(t *testing.T) {
 func Test_FindLinkInfoHttp(t *testing.T) {
 	tag := "http:"
 	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	var doc = services.Document{
 		Doc: d,
 	}
 	expectedInaccessibleLinkCount := 1
-	inaccessibleLinkCount, _, _ := doc.FindLinkInfo(tag)
+	inaccessibleLinkCount, _, _ := doc.FindLinkInfo(ctx, tag)
 
 	if expectedInaccessibleLinkCount != inaccessibleLinkCount {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", inaccessibleLinkCount, expectedInaccessibleLinkCount, inaccessibleLinkCount)
@@ -132,11 +133,11 @@ func Test_FindLinkInfoHttp(t *testing.T) {
 func Test_FindLinkInfoLinkCountHttp(t *testing.T) {
 	tag := "http:"
 	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	var doc = services.Document{
 		Doc: d,
 	}
 	expectedLinkCount := 1
-	_, linkCount, _ := doc.FindLinkInfo(tag)
+	_, linkCount, _ := doc.FindLinkInfo(ctx, tag)
 
 	if expectedLinkCount != linkCount {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", linkCount,
@@ -149,12 +150,12 @@ func Test_FindLinkInfoLinkCountHttp(t *testing.T) {
 
 func Test_CheckDoctype(t *testing.T) {
 	d, _ := goquery.NewDocumentFromReader(strings.NewReader(data))
-	var doc = interfaces.Document{
+	var doc = services.Document{
 		Doc: d,
 	}
 	htmlStr, _ := doc.Doc.Html()
 	expectedDocType := "HTML 5"
-	docType := doc.CheckDoctype(htmlStr)
+	docType := doc.CheckDoctype(ctx, htmlStr)
 
 	if expectedDocType != docType {
 		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", docType,
@@ -162,5 +163,21 @@ func Test_CheckDoctype(t *testing.T) {
 	} else {
 		t.Logf("\"FindMultipleElementCount('%v')\" SUCCEDED, expected -> %v, got -> %v", docType,
 			expectedDocType, docType)
+	}
+}
+
+func Test_findLogins(t *testing.T) {
+	tag := "body input[type=password]"
+	d, _ = goquery.NewDocumentFromReader(strings.NewReader(data))
+	var doc = services.Document{
+		Doc: d,
+	}
+	expected := 1
+	result := doc.FindMultipleElementCount(ctx, tag)
+
+	if result != expected {
+		t.Errorf("\"FindMultipleElementCount('%v')\" FAILED, expected -> %v, got -> %v", result, expected, result)
+	} else {
+		t.Logf("\"FindMultipleElementCount('%v')\" SUCCEDED, expected -> %v, got -> %v", result, expected, result)
 	}
 }

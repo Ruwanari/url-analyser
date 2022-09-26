@@ -23,7 +23,7 @@ func Init(res embed.FS, pages map[string]string) {
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			page, ok := pages[r.URL.Path]
 			if !ok {
-				//log.Printf()
+				log.Printf("page is not found")
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
@@ -39,7 +39,7 @@ func Init(res embed.FS, pages map[string]string) {
 				"userAgent": r.UserAgent(),
 			}
 			if err := tpl.Execute(w, data); err != nil {
-				//log
+				log.Printf("Error executing template. %v ", err)
 				return
 			}
 		})

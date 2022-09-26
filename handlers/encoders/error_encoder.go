@@ -32,14 +32,16 @@ func CustomErrorEncoder(ctx context.Context, err error, w http.ResponseWriter) {
 	var errorResponse response_schemas.ErrorResponses
 	errorResponse.Errors = append(errorResponse.Errors, errs)
 
-	fp := path.Join("static", "errorResponseTemplate.gohtml")
+	fp := path.Join("static", "error_response_template.gohtml")
 	tmpl, err := template.ParseFiles(fp)
 	if err != nil {
-		log.Printf("Error parsing template " + err.Error())
+		log.Printf("Error parsing template ctx : %v, err : %v ", ctx, err.Error())
+		return
 	}
 
 	err = tmpl.Execute(w, response_schemas.ErrorResponseWrapper(errorResponse))
 	if err != nil {
-		log.Printf("Error executing template " + err.Error())
+		log.Printf("Error executing template ctx : %v, err : %v ", ctx, err.Error())
+		return
 	}
 }
