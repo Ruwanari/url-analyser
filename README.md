@@ -10,9 +10,12 @@ This service scrapes the HTML content of a web page using Goquery and returns fo
 - If the web page contains a login or not
 
 # To run the service
+- Clone the master branch
 - Navigate to project root
+- go get
 - go test -v ./...
 - go run main.go
+- Open the browser on http://localhost:8088
 
 # Pre-requisites
 - Go 1.17 or above should be installed
